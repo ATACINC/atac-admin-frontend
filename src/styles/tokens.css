@@ -1,0 +1,18 @@
+:root {
+  --bg: #080B12;
+  --bg-1: #0C1018;
+  --bg-3: #141B26;
+  --gold: #C9A84C;
+  --teal: #1A8F69;
+  --teal-2: #22A67E;
+  --red: #C45C5C;
+  --amber: #C48A2A;
+  --white: #EEE9DF;
+  --muted: rgba(238, 233, 223, 0.45);
+  --faint: rgba(238, 233, 223, 0.04);
+  --border: rgba(201, 168, 76, 0.15);
+  --border-2: rgba(238, 233, 223, 0.07);
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Syne', 'DM Sans', sans-serif;
+}

@@ -1,0 +1,320 @@
+/* ─── Page header ────────────────────────────────────────────────────── */
+.stuck-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.stuck-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--white);
+  margin: 0 0 4px;
+  line-height: 1.05;
+}
+
+.stuck-subtitle {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stuck-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.04em;
+}
+
+.stuck-toggle input {
+  appearance: none;
+  width: 32px;
+  height: 18px;
+  background: var(--faint);
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.stuck-toggle input::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.15s;
+}
+
+.stuck-toggle input:checked {
+  background: rgba(201, 168, 76, 0.18);
+  border-color: var(--gold);
+}
+
+.stuck-toggle input:checked::before {
+  transform: translateX(14px);
+  background: var(--gold);
+}
+
+/* ─── Notes panel ────────────────────────────────────────────────────── */
+.stuck-notes-panel {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-left: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+
+.stuck-notes-header {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.stuck-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.stuck-notes-list strong {
+  color: var(--white);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* ─── Type filter pills ──────────────────────────────────────────────── */
+.stuck-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 18px;
+}
+
+.stuck-pill {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -1px;
+}
+
+.stuck-pill:hover {
+  color: var(--white);
+}
+
+.stuck-pill.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.stuck-pill-count {
+  background: var(--faint);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 1px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  text-align: center;
+}
+
+.stuck-pill.active .stuck-pill-count {
+  background: rgba(201, 168, 76, 0.16);
+  color: var(--gold);
+}
+
+/* ─── Issue cards ────────────────────────────────────────────────────── */
+.stuck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stuck-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-left-width: 3px;
+  border-radius: 4px;
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+
+.stuck-card-high {
+  border-left-color: var(--red);
+}
+
+.stuck-card-medium {
+  border-left-color: var(--amber);
+}
+
+.stuck-card-low {
+  border-left-color: var(--muted);
+}
+
+.stuck-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.stuck-type {
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.stuck-age {
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.stuck-test-badge {
+  background: rgba(238, 233, 223, 0.06);
+  color: var(--muted);
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.stuck-card-body {
+  margin-bottom: 12px;
+}
+
+.stuck-target {
+  font-size: 13px;
+  color: var(--white);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stuck-target-label {
+  color: var(--white);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.stuck-target-id {
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--faint);
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  padding: 2px 8px;
+  word-break: break-all;
+}
+
+.stuck-description {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.stuck-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-2);
+}
+
+.stuck-action-btn {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 7px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.stuck-action-btn:hover {
+  background: rgba(201, 168, 76, 0.08);
+  text-decoration: none;
+}
+
+.stuck-action-btn[disabled] {
+  color: var(--muted);
+  border-color: var(--border-2);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.stuck-action-btn[disabled]:hover {
+  background: transparent;
+}
+
+/* ─── States ─────────────────────────────────────────────────────────── */
+.stuck-state {
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.stuck-state-healthy {
+  color: var(--teal-2);
+}
+
+.stuck-state-empty {
+  color: var(--muted);
+}
+
+.stuck-state-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  display: block;
+}

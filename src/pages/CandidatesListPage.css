@@ -1,0 +1,332 @@
+/* ─── Page header ────────────────────────────────────────────────────── */
+.cands-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.cands-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--white);
+  margin: 0 0 4px;
+  line-height: 1.05;
+}
+
+.cands-subtitle {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ─── Filter bar ─────────────────────────────────────────────────────── */
+.cands-filters {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.cands-search {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(8, 11, 18, 0.6);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.cands-search::placeholder {
+  color: rgba(238, 233, 223, 0.32);
+}
+
+.cands-search:focus {
+  border-color: var(--gold);
+}
+
+.cands-select {
+  background: rgba(8, 11, 18, 0.6);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 14px;
+  outline: none;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.cands-select:focus {
+  border-color: var(--gold);
+}
+
+.cands-clear {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cands-clear:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.cands-fetching {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ─── Table ──────────────────────────────────────────────────────────── */
+.cands-table-wrap {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.cands-table-wrap.is-stale {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.cands-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.cands-table thead th {
+  background: var(--bg-3);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-2);
+  white-space: nowrap;
+}
+
+.cands-table tbody tr {
+  border-bottom: 1px solid var(--border-2);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.cands-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.cands-table tbody tr:hover {
+  background: var(--faint);
+}
+
+.cands-table tbody tr:focus {
+  outline: none;
+  background: var(--faint);
+}
+
+.cands-table td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  color: var(--white);
+}
+
+/* Column-specific cells */
+.cell-name {
+  color: var(--white);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cell-email {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cell-wallet {
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cell-wallet-empty {
+  color: rgba(238, 233, 223, 0.28);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.cell-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.cell-score-pass {
+  color: var(--teal-2);
+}
+
+.cell-score-fail {
+  color: var(--red);
+}
+
+.cell-score-empty {
+  color: var(--muted);
+}
+
+.cell-joined {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cell-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cell-actions a {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 6px 12px;
+  display: inline-block;
+}
+
+.cell-actions a:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+/* ─── States ─────────────────────────────────────────────────────────── */
+.cands-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.cands-empty-action {
+  margin-top: 16px;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 9px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cands-empty-action:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+/* ─── Composite candidate-status badge ───────────────────────────────── */
+.cand-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 2px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid;
+}
+
+.cand-badge-credentialed {
+  background: rgba(201, 168, 76, 0.10);
+  color: var(--gold);
+  border-color: var(--border);
+}
+
+.cand-badge-assessed {
+  background: rgba(34, 166, 126, 0.10);
+  color: var(--teal-2);
+  border-color: rgba(34, 166, 126, 0.28);
+}
+
+.cand-badge-inprogress {
+  background: rgba(196, 138, 42, 0.10);
+  color: var(--amber);
+  border-color: rgba(196, 138, 42, 0.28);
+}
+
+.cand-badge-registered {
+  background: var(--faint);
+  color: var(--muted);
+  border-color: var(--border-2);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 1000px) {
+  .cands-filters {
+    flex-wrap: wrap;
+  }
+  .cands-search {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .cands-table thead {
+    display: none;
+  }
+  .cands-table,
+  .cands-table tbody,
+  .cands-table tr,
+  .cands-table td {
+    display: block;
+    width: 100%;
+  }
+  .cands-table tbody tr {
+    padding: 12px 14px;
+  }
+  .cands-table td {
+    padding: 4px 0;
+  }
+  .cell-actions {
+    text-align: left;
+    margin-top: 6px;
+  }
+}
