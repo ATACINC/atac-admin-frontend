@@ -5,6 +5,7 @@ const NAV = [
   { to: '/credentials', label: 'Credentials' },
   { to: '/candidates', label: 'Candidates' },
   { to: '/stuck-issues', label: 'Stuck Issues' },
+  { to: '/assessments/anomalies', label: 'Anomalies' },
   { to: '/employer-leads', label: 'Employer Leads' },
 ];
 

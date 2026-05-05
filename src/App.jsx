@@ -9,6 +9,7 @@ import CredentialsListPage from './pages/CredentialsListPage';
 import CredentialDetailPage from './pages/CredentialDetailPage';
 import CandidatesListPage from './pages/CandidatesListPage';
 import StuckIssuesPage from './pages/StuckIssuesPage';
+import AssessmentAnomaliesPage from './pages/AssessmentAnomaliesPage';
 import EmployerLeadsPage from './pages/EmployerLeadsPage';
 
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/credentials/:credentialId" element={<CredentialDetailPage />} />
                 <Route path="/candidates" element={<CandidatesListPage />} />
                 <Route path="/stuck-issues" element={<StuckIssuesPage />} />
+                <Route path="/assessments/anomalies" element={<AssessmentAnomaliesPage />} />
                 <Route path="/employer-leads" element={<EmployerLeadsPage />} />
               </Route>
             </Route>

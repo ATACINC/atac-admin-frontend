@@ -73,3 +73,13 @@ export const apiGetEmployerLeads = (params = {}) =>
 
 export const apiMarkLeadContacted = (leadId) =>
   client.post(`/employer-leads/${leadId}/contacted`).then((r) => r.data);
+
+// ── Assessment anomalies (Phase 6) ──────────────────────────────────────
+export const apiGetAssessmentAnomalies = (params = {}) =>
+  client.get('/assessments/anomalies', { params }).then((r) => r.data);
+
+export const apiGetAssessmentTimings = (assessmentId) =>
+  client.get(`/assessments/${assessmentId}/timings`).then((r) => r.data);
+
+export const apiReviewAssessment = (assessmentId, note) =>
+  client.post(`/assessments/${assessmentId}/review`, { note }).then((r) => r.data);
