@@ -233,6 +233,32 @@
   background: rgba(201, 168, 76, 0.08);
 }
 
+.cell-action-reset {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.cell-action-reset:hover {
+  text-decoration: underline;
+}
+
+.cell-action-reset:focus-visible {
+  outline: 1px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ─── States ─────────────────────────────────────────────────────────── */
 .cands-state {
   padding: 60px 20px;

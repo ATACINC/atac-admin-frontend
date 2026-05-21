@@ -5,6 +5,8 @@ import { apiGetCandidates } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import Pagination from '../components/Pagination';
+import Toast from '../components/Toast';
+import ResetPasswordModal from '../components/ResetPasswordModal';
 import { timeAgo } from '../utils/timeAgo';
 import { truncateMiddle } from '../utils/format';
 import './CandidatesListPage.css';
@@ -104,6 +106,15 @@ export default function CandidatesListPage() {
     navigate(`/credentials?search=${encodeURIComponent(candidate.email)}`);
   };
 
+  // ── Reset-password modal state ───────────────────────────────
+  const [resetTarget, setResetTarget] = useState(null); // { email, name } | null
+  const [toast, setToast] = useState(null);             // { message, type } | null
+
+  const openResetModal = (candidate) => {
+    if (!candidate?.email) return;
+    setResetTarget({ email: candidate.email, name: candidate.name });
+  };
+
   return (
     <div>
       {/* ── Header ──────────────────────────────────────────── */}
@@ -187,7 +198,12 @@ export default function CandidatesListPage() {
               </thead>
               <tbody>
                 {rows.map((c) => (
-                  <CandidateRow key={c.id} candidate={c} onNavigate={goToCandidate} />
+                  <CandidateRow
+                    key={c.id}
+                    candidate={c}
+                    onNavigate={goToCandidate}
+                    onReset={openResetModal}
+                  />
                 ))}
               </tbody>
             </table>
@@ -201,13 +217,39 @@ export default function CandidatesListPage() {
           />
         </>
       )}
+
+      {resetTarget && (
+        <ResetPasswordModal
+          open={!!resetTarget}
+          candidateEmail={resetTarget.email}
+          candidateName={resetTarget.name}
+          onClose={() => setResetTarget(null)}
+          onComplete={({ outcome }) => {
+            if (outcome === 'success') {
+              setToast({
+                message: `Temporary password emailed to ${resetTarget.email}`,
+                type: 'success',
+              });
+            }
+            setResetTarget(null);
+          }}
+        />
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
 
 /* ─── Sub-components ─────────────────────────────────────────────────── */
 
-function CandidateRow({ candidate, onNavigate }) {
+function CandidateRow({ candidate, onNavigate, onReset }) {
   const handleRowClick = () => onNavigate(candidate);
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -216,8 +258,13 @@ function CandidateRow({ candidate, onNavigate }) {
     }
   };
   const stopRow = (e) => e.stopPropagation();
+  const handleResetClick = (e) => {
+    e.stopPropagation();
+    onReset(candidate);
+  };
 
   const credLink = `/credentials?search=${encodeURIComponent(candidate.email || '')}`;
+  const canReset = !!candidate.email;
 
   return (
     <tr
@@ -251,6 +298,16 @@ function CandidateRow({ candidate, onNavigate }) {
         <Link to={credLink} onClick={stopRow}>
           View
         </Link>
+        {canReset && (
+          <button
+            type="button"
+            className="cell-action-reset"
+            onClick={handleResetClick}
+            aria-label={`Reset password for ${candidate.name || candidate.email}`}
+          >
+            Reset Password
+          </button>
+        )}
       </td>
     </tr>
   );

@@ -83,3 +83,7 @@ export const apiGetAssessmentTimings = (assessmentId) =>
 
 export const apiReviewAssessment = (assessmentId, note) =>
   client.post(`/assessments/${assessmentId}/review`, { note }).then((r) => r.data);
+
+// ── Auth admin actions ──────────────────────────────────────────────────
+export const apiResetCandidatePassword = (candidateEmail) =>
+  client.post('/auth/reset-candidate-password', { candidateEmail }).then((r) => r.data);
