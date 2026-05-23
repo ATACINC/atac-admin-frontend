@@ -35,7 +35,7 @@ export default function Pagination({ page, pageSize, total, onChange }) {
       <div style={{ fontSize: 13, color: 'var(--muted)' }}>
         {total === 0
           ? 'No results'
-          : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total.toLocaleString()}`}
+          : `Showing ${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, total)} of ${total.toLocaleString()}`}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button

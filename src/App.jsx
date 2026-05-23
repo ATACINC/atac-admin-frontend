@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import CredentialsListPage from './pages/CredentialsListPage';
 import CredentialDetailPage from './pages/CredentialDetailPage';
 import CandidatesListPage from './pages/CandidatesListPage';
+import FeedbackPage from './pages/FeedbackPage';
 import StuckIssuesPage from './pages/StuckIssuesPage';
 import AssessmentAnomaliesPage from './pages/AssessmentAnomaliesPage';
 import EmployerLeadsPage from './pages/EmployerLeadsPage';
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/credentials" element={<CredentialsListPage />} />
                 <Route path="/credentials/:credentialId" element={<CredentialDetailPage />} />
                 <Route path="/candidates" element={<CandidatesListPage />} />
+                <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/stuck-issues" element={<StuckIssuesPage />} />
                 <Route path="/assessments/anomalies" element={<AssessmentAnomaliesPage />} />
                 <Route path="/employer-leads" element={<EmployerLeadsPage />} />

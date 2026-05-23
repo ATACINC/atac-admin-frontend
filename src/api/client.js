@@ -87,3 +87,20 @@ export const apiReviewAssessment = (assessmentId, note) =>
 // ── Auth admin actions ──────────────────────────────────────────────────
 export const apiResetCandidatePassword = (candidateEmail) =>
   client.post('/auth/reset-candidate-password', { candidateEmail }).then((r) => r.data);
+
+// ── Feedback (Phase 2) ──────────────────────────────────────────────────
+// List endpoint accepts optional source filter, wouldRecommend filter
+// ('true' or 'false' string), plus limit/offset. Filter values of 'all'
+// or undefined are excluded so the backend treats them as no-filter.
+export const apiGetFeedbackList = (params = {}) => {
+  const { source, wouldRecommend, limit = 50, offset = 0 } = params;
+  const apiParams = { limit, offset };
+  if (source && source !== 'all') apiParams.source = source;
+  if (wouldRecommend === 'true' || wouldRecommend === 'false') {
+    apiParams.wouldRecommend = wouldRecommend;
+  }
+  return client.get('/feedback/list', { params: apiParams }).then((r) => r.data);
+};
+
+export const apiGetFeedbackStats = () =>
+  client.get('/feedback/stats').then((r) => r.data);
