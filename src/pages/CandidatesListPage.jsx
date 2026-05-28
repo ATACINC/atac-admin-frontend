@@ -9,6 +9,7 @@ import Toast from '../components/Toast';
 import ResetPasswordModal from '../components/ResetPasswordModal';
 import { timeAgo } from '../utils/timeAgo';
 import { truncateMiddle } from '../utils/format';
+import { isDraftWeighting, isAssessmentOnly, fmtScore, passClass } from '../utils/scoreDisplay';
 import './CandidatesListPage.css';
 
 const PAGE_SIZE = 25;
@@ -289,7 +290,10 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
         <CandidateStatusBadge status={candidate.status} />
       </td>
       <td>
-        <LatestScoreCell assessment={candidate.latestAssessment} />
+        <ScoreTrioCell
+          assessment={candidate.latestAssessment}
+          credential={candidate.latestCredential}
+        />
       </td>
       <td className="cell-joined" title={candidate.createdAt}>
         {candidate.createdAt ? timeAgo(candidate.createdAt) : '—'}
@@ -325,12 +329,81 @@ function CandidateStatusBadge({ status }) {
   return <span className={`cand-badge ${cfg.className}`}>{cfg.label}</span>;
 }
 
-function LatestScoreCell({ assessment }) {
-  if (!assessment || assessment.percentage == null) {
-    return <span className="cell-score cell-score-empty">—</span>;
+// Three-value cell: assessment / simulator / combined. Branches on the
+// candidate's stage so we never render fake combined scores or
+// misleading dashes:
+//   - Pre-credential (no latestCredential): just the assessment value
+//     (or em-dash placeholder for true empty), same as the old cell.
+//   - Credential, assessment-only (Pioneers, no sim done): show A only
+//     plus the NEEDS SIM upgrade tag, with S and C as muted "--".
+//   - Credential, full sim: A / S / C all rendered, C in gold with the
+//     DRAFT pill while the weighting version starts with "DRAFT".
+function ScoreTrioCell({ assessment, credential }) {
+  const hasAssessment = assessment && assessment.percentage != null;
+
+  // No credential yet, nothing or assessment only: preserve the pre-
+  // Phase 3 single-value rendering so pre-credential rows stay clean.
+  if (!credential) {
+    if (!hasAssessment) {
+      return <span className="cell-score cell-score-empty">--</span>;
+    }
+    const cls = 'cell-score ' + (
+      assessment.passed === true ? 'cell-score-pass'
+        : assessment.passed === false ? 'cell-score-fail'
+        : ''
+    );
+    return <span className={cls}>{assessment.percentage}%</span>;
   }
-  const cls =
-    'cell-score ' +
-    (assessment.passed === true ? 'cell-score-pass' : assessment.passed === false ? 'cell-score-fail' : '');
-  return <span className={cls}>{assessment.percentage}%</span>;
+
+  // Has a credential. Render the trio.
+  const aValue = hasAssessment ? `${assessment.percentage}%` : '--';
+  const aCls = !hasAssessment
+    ? 'cell-trio-value cell-trio-muted'
+    : 'cell-trio-value ' + (
+        assessment.passed === true ? 'cell-score-pass'
+          : assessment.passed === false ? 'cell-score-fail'
+          : ''
+      );
+
+  const assessmentOnly = isAssessmentOnly(credential);
+  const draftBadge = isDraftWeighting(credential.combinedWeightingVersion);
+
+  return (
+    <div className="cell-trio">
+      <span className="cell-trio-pair">
+        <span className="cell-trio-label">A</span>
+        <span className={aCls}>{aValue}</span>
+      </span>
+      <span className="cell-trio-pair">
+        <span className="cell-trio-label">S</span>
+        <span className={
+          credential.simulatorScore != null
+            ? 'cell-trio-value cell-trio-sim ' + (passClass(credential.simulatorScore) === 'fail' ? 'cell-score-fail' : '')
+            : 'cell-trio-value cell-trio-muted'
+        }>
+          {fmtScore(credential.simulatorScore)}
+        </span>
+      </span>
+      <span className="cell-trio-pair">
+        <span className="cell-trio-label">C</span>
+        <span className={
+          credential.combinedScore != null
+            ? 'cell-trio-value cell-trio-combined'
+            : 'cell-trio-value cell-trio-muted'
+        }>
+          {fmtScore(credential.combinedScore)}
+        </span>
+        {draftBadge && !assessmentOnly && (
+          <span className="cand-badge cand-badge-draft" title={credential.combinedWeightingVersion}>
+            Draft
+          </span>
+        )}
+      </span>
+      {assessmentOnly && (
+        <span className="cand-badge cand-badge-needs-sim" title="Eligible to take the Call Readiness Simulator">
+          Needs Sim
+        </span>
+      )}
+    </div>
+  );
 }

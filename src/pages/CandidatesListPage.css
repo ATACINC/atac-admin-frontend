@@ -205,6 +205,49 @@
   color: var(--muted);
 }
 
+/* ─── Three-value score cell (assessment / simulator / combined) ──────── */
+.cell-trio {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cell-trio-pair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.cell-trio-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cell-trio-value {
+  color: var(--white);
+}
+
+.cell-trio-muted {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.cell-trio-sim {
+  color: var(--teal-2);
+}
+
+.cell-trio-combined {
+  color: var(--gold);
+}
+
 .cell-joined {
   color: var(--muted);
   font-size: 13px;
@@ -315,6 +358,30 @@
   background: rgba(196, 138, 42, 0.10);
   color: var(--amber);
   border-color: rgba(196, 138, 42, 0.28);
+}
+
+/* Phase 3: provisional combined-score weighting marker. Gold,
+   harmonizes with the credentialed variant but distinct text. Vanishes
+   automatically when combinedWeightingVersion no longer starts with
+   "DRAFT". */
+.cand-badge-draft {
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--gold);
+  border-color: var(--border);
+  font-size: 9px;
+  padding: 2px 7px;
+  margin-left: 2px;
+}
+
+/* Phase 3: marker for assessment-only credential holders (Pioneers and
+   pre-simulator legacy). Teal-tinted so it reads as a positive next
+   step ("take the simulator") rather than an error. */
+.cand-badge-needs-sim {
+  background: rgba(34, 166, 126, 0.10);
+  color: var(--teal-2);
+  border-color: rgba(34, 166, 126, 0.28);
+  font-size: 9px;
+  padding: 2px 7px;
 }
 
 .cand-badge-registered {

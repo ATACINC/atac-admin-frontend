@@ -11,6 +11,7 @@ import RevokeModal from '../components/RevokeModal';
 import { timeAgo } from '../utils/timeAgo';
 import { humanizeDimKey } from '../utils/humanize';
 import { truncateMiddle, formatLongDate } from '../utils/format';
+import { isDraftWeighting, isAssessmentOnly, PASS_THRESHOLD } from '../utils/scoreDisplay';
 import './CredentialDetailPage.css';
 
 export default function CredentialDetailPage() {
@@ -251,6 +252,9 @@ export default function CredentialDetailPage() {
         </div>
       )}
 
+      {/* ── Section 3.5: Three-Score Breakdown (Phase 3) ──────── */}
+      <ScoreBreakdown cred={cred} asmt={asmt} />
+
       {/* ── Section 4: Revocation (conditional) ───────────────── */}
       {cred.revoke && (
         <div className="revoke-block" role="alert">
@@ -365,7 +369,11 @@ export default function CredentialDetailPage() {
 function MetricCell({ label, value, tone }) {
   const numClass =
     'metric-num' +
-    (tone === 'pass' ? ' metric-pass' : tone === 'fail' ? ' metric-fail' : tone === 'plain' ? ' metric-plain' : '');
+    (tone === 'pass' ? ' metric-pass'
+      : tone === 'fail' ? ' metric-fail'
+      : tone === 'combined' ? ' metric-combined'
+      : tone === 'plain' ? ' metric-plain'
+      : '');
   return (
     <div className="metric-cell">
       <div className="detail-field-label" style={{ marginBottom: 0 }}>{label}</div>
@@ -402,6 +410,96 @@ function DimensionBreakdown({ dimScores }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* === Phase 3: Three-Score Breakdown ====================================
+ * Renders the assessment percentage, simulator score, and combined score
+ * for a single credential. Combined score is gold + DRAFT badge while
+ * combinedWeightingVersion still starts with "DRAFT". Assessment-only
+ * credentials (Pioneers, pre-simulator legacy) show a clear "not yet
+ * completed" state for the simulator and combined slots, no fake values.
+ *
+ * Per-dimension simulator breakdowns (greeting/empathy/resolution/tone/
+ * close) are not in this API response shape; a small muted footnote
+ * tells the viewer they can be wired later.
+ */
+function ScoreBreakdown({ cred, asmt }) {
+  const assessmentPct = asmt && asmt.percentage != null ? asmt.percentage : null;
+  const simScore      = cred?.simulatorScore != null ? cred.simulatorScore : null;
+  const combined      = cred?.combinedScore != null ? cred.combinedScore : null;
+  const version       = cred?.combinedWeightingVersion || null;
+  const draftBadge    = isDraftWeighting(version);
+  const assessmentOnly = isAssessmentOnly(cred);
+
+  // If we have neither assessment nor simulator data, render nothing
+  // rather than an empty card.
+  if (assessmentPct == null && simScore == null) return null;
+
+  const aTone = assessmentPct == null
+    ? 'plain'
+    : assessmentPct >= PASS_THRESHOLD ? 'pass' : 'fail';
+
+  const sTone = simScore == null
+    ? 'plain'
+    : simScore >= PASS_THRESHOLD ? 'pass' : 'fail';
+
+  return (
+    <div className="detail-card score-breakdown-card">
+      <div className="detail-section-label">Score Breakdown</div>
+
+      <div className="metric-grid">
+        <MetricCell
+          label="Assessment"
+          value={assessmentPct != null ? `${assessmentPct}%` : '--'}
+          tone={aTone}
+        />
+        <MetricCell
+          label="Call Readiness Simulator"
+          value={simScore != null ? `${simScore}` : 'Not yet completed'}
+          tone={sTone}
+        />
+        <MetricCell
+          label="Combined Score"
+          value={combined != null ? combined.toString() : '--'}
+          tone={combined != null ? 'combined' : 'plain'}
+        />
+        <div className="metric-cell">
+          <div className="detail-field-label" style={{ marginBottom: 0 }}>Pass Threshold</div>
+          <div className="metric-num metric-plain">{PASS_THRESHOLD}</div>
+        </div>
+      </div>
+
+      {/* Combined-score DRAFT banner. Auto-clears when version changes. */}
+      {combined != null && draftBadge && (
+        <div className="score-draft-note">
+          <span className="cand-badge cand-badge-draft">Draft Weighting</span>
+          <span>
+            Provisional. Final weighting pending review. Version:{' '}
+            <code className="score-draft-version">{version}</code>
+          </span>
+        </div>
+      )}
+
+      {/* Assessment-only state. Cred holder is eligible for the
+          simulator and a real combined score. */}
+      {assessmentOnly && (
+        <div className="score-assessment-only-note">
+          <span className="cand-badge cand-badge-needs-sim">Needs Simulator</span>
+          <span>
+            Call Readiness not yet completed. This holder is eligible to
+            take the Call Readiness Simulator to earn a combined score.
+          </span>
+        </div>
+      )}
+
+      {/* Per-dimension footnote */}
+      {simScore != null && (
+        <div className="score-dimensions-footnote">
+          Per-dimension simulator scores (greeting, empathy, resolution, tone, close) can be wired in a later update.
+        </div>
+      )}
     </div>
   );
 }
