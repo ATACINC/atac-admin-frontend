@@ -242,7 +242,9 @@ function CredentialRow({ row, isActive, onNavigate }) {
       </td>
       <td>
         <span className="cred-score">
-          {row.percentage != null ? `${row.percentage}%` : '—'}
+          {row.combinedScore != null
+            ? `${Number.isInteger(row.combinedScore) ? row.combinedScore : row.combinedScore.toFixed(1)}`
+            : row.percentage != null ? `${row.percentage}%` : '—'}
         </span>
       </td>
       <td>
