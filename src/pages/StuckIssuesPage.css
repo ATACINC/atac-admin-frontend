@@ -219,6 +219,36 @@
   text-transform: uppercase;
 }
 
+/* Simulator failure-stage badge. Tinted by the item's severity so the
+   actionable stages (high = provider_quota/scoring_error/scoring_timeout)
+   read differently from routine drops (low = short_hangup/silence_timeout/
+   incomplete_call), reusing the page's high/medium/low signal. */
+.stuck-stage-badge {
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.stuck-stage-badge-high {
+  background: rgba(196, 92, 92, 0.12);
+  color: var(--red);
+  border-color: rgba(196, 92, 92, 0.4);
+}
+.stuck-stage-badge-medium {
+  background: rgba(196, 138, 42, 0.12);
+  color: var(--amber);
+  border-color: rgba(196, 138, 42, 0.4);
+}
+.stuck-stage-badge-low {
+  background: rgba(238, 233, 223, 0.06);
+  color: var(--muted);
+  border-color: var(--border-2);
+}
+
 .stuck-card-body {
   margin-bottom: 12px;
 }

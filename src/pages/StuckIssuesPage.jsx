@@ -9,13 +9,14 @@ import { timeAgo } from '../utils/timeAgo';
 import { humanizeStuckType, humanizeNoteKey } from '../utils/humanize';
 import './StuckIssuesPage.css';
 
-// All four issue types in canonical order. Render even when count = 0 so ops
+// All issue types in canonical order. Render even when count = 0 so ops
 // can see the categories the system tracks.
 const ISSUE_TYPES = [
   'failedMint',
   'stuckAssessment',
   'emailBounce',
   'undeliveredCredential',
+  'simulatorFailure',
 ];
 
 const SEVERITY_RANK = { high: 3, medium: 2, low: 1 };
@@ -27,7 +28,17 @@ const PILL_LABELS = {
   stuckAssessment:       'Stuck Assessments',
   emailBounce:           'Email Bounces',
   undeliveredCredential: 'Undelivered',
+  simulatorFailure:      'Simulator Failures',
 };
+
+// failureStage (snake_case) -> readable label for the stage badge.
+function humanizeStage(stage) {
+  if (!stage) return '';
+  return String(stage)
+    .split('_')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
 
 // ── Shape-tolerant accessors ────────────────────────────────────────────
 // The backend currently emits flat fields (targetType, targetId, message,
@@ -269,6 +280,17 @@ function IssueCard({ issue }) {
       <div className="stuck-card-header">
         <SeverityBadge severity={sev} />
         <span className="stuck-type">{humanizeStuckType(issue.type)}</span>
+        {/* Failure-stage badge (simulator items only carry failureStage).
+            Tinted by the item's own severity so provider_quota/scoring_error
+            (high) read differently from routine drops (low). */}
+        {issue.failureStage && (
+          <span
+            className={`stuck-stage-badge stuck-stage-badge-${safeSev}`}
+            title="Simulator failure stage"
+          >
+            {humanizeStage(issue.failureStage)}
+          </span>
+        )}
         {issue.isLikelyTest && (
           <span className="stuck-test-badge" title="Looks like a test/dryrun account">
             Test
@@ -359,6 +381,30 @@ function IssueActions({ issue, candidateEmail }) {
           title="Re-send credential endpoint not yet wired"
         >
           Re-send Credential Email
+        </button>
+      );
+
+    case 'simulatorFailure':
+      // Link target is candidateId (NOT targetId, which is the session id).
+      if (issue.candidateId) {
+        return (
+          <Link
+            to={`/candidates/${issue.candidateId}`}
+            className="stuck-action-btn"
+            title="View candidate detail"
+          >
+            View Candidate
+          </Link>
+        );
+      }
+      return (
+        <button
+          type="button"
+          className="stuck-action-btn"
+          disabled
+          title="No candidate id on this item"
+        >
+          View Candidate
         </button>
       );
 
