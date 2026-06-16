@@ -63,6 +63,21 @@ export const apiGetCandidates = (params = {}) =>
 export const apiGetCandidate = (candidateId) =>
   client.get(`/candidates/${candidateId}`).then((r) => r.data);
 
+// ── Simulator ops (Sim-Ops Phase 2) ──────────────────────────────────────
+// All three are POST with no body; the backend resolves the target session
+// and cooldown server-side. Returned shapes:
+//   clear-cooldown -> { cleared, alreadyClear }
+//   reset-attempt  -> { reset, alreadyClear, priorStatus, scenarioCode, ageSeconds, createdAt }
+//   force-retry    -> { cooldownCleared, attemptReset }
+export const apiClearSimulatorCooldown = (candidateId) =>
+  client.post(`/candidates/${candidateId}/simulator/clear-cooldown`).then((r) => r.data);
+
+export const apiResetSimulatorAttempt = (candidateId) =>
+  client.post(`/candidates/${candidateId}/simulator/reset-attempt`).then((r) => r.data);
+
+export const apiForceSimulatorRetry = (candidateId) =>
+  client.post(`/candidates/${candidateId}/simulator/force-retry`).then((r) => r.data);
+
 // ── Stuck issues ────────────────────────────────────────────────────────
 export const apiGetStuckIssues = (params = {}) =>
   client.get('/stuck-issues', { params }).then((r) => r.data);

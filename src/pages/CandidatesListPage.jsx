@@ -100,11 +100,10 @@ export default function CandidatesListPage() {
   const total = data?.total ?? 0;
   const page = Math.floor(offset / PAGE_SIZE) + 1;
 
-  // ── Navigate row click → /credentials?search=email ───────────
-  // Repurposes the credentials-list search to show this candidate's credentials.
+  // ── Navigate row click → candidate detail page ───────────────
   const goToCandidate = (candidate) => {
-    if (!candidate?.email) return;
-    navigate(`/credentials?search=${encodeURIComponent(candidate.email)}`);
+    if (!candidate?.id) return;
+    navigate(`/candidates/${candidate.id}`);
   };
 
   // ── Reset-password modal state ───────────────────────────────
@@ -264,7 +263,7 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
     onReset(candidate);
   };
 
-  const credLink = `/credentials?search=${encodeURIComponent(candidate.email || '')}`;
+  const detailLink = `/candidates/${candidate.id}`;
   const canReset = !!candidate.email;
 
   return (
@@ -273,7 +272,7 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`View credentials for ${candidate.name || candidate.email}`}
+      aria-label={`View candidate ${candidate.name || candidate.email}`}
     >
       <td className="cell-name">{candidate.name || '—'}</td>
       <td className="cell-email">{candidate.email || '—'}</td>
@@ -299,7 +298,7 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
         {candidate.createdAt ? timeAgo(candidate.createdAt) : '—'}
       </td>
       <td className="cell-actions">
-        <Link to={credLink} onClick={stopRow}>
+        <Link to={detailLink} onClick={stopRow}>
           View
         </Link>
         {canReset && (
