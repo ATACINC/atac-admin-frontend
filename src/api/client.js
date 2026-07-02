@@ -78,6 +78,25 @@ export const apiResetSimulatorAttempt = (candidateId) =>
 export const apiForceSimulatorRetry = (candidateId) =>
   client.post(`/candidates/${candidateId}/simulator/force-retry`).then((r) => r.data);
 
+// ── Candidate support tools (email edit / verification / archive) ─────────
+// PATCH email { email } -> 200 { ok, candidate:{id,email,email_verified}, verification_sent, mx_warning? }
+//   409 { code:'EMAIL_TAKEN', conflict:{id,name,email,email_verified,created_at} }
+//   422 { code:'EMAIL_DOMAIN_INVALID', reason } · 400 EMAIL_SYNTAX|EMAIL_UNCHANGED · 404
+export const apiUpdateCandidateEmail = (candidateId, email) =>
+  client.patch(`/candidates/${candidateId}/email`, { email }).then((r) => r.data);
+
+// POST resend-verification -> 200 { ok, sent } · 429 { code:'RATE_LIMITED', waitSeconds } · 400 ALREADY_VERIFIED
+export const apiResendVerification = (candidateId) =>
+  client.post(`/candidates/${candidateId}/resend-verification`).then((r) => r.data);
+
+// POST archive { reason } -> 200 { ok, archived } · 409 { code:'HAS_ACTIVITY', activity } · 400 ALREADY_ARCHIVED
+export const apiArchiveCandidate = (candidateId, reason) =>
+  client.post(`/candidates/${candidateId}/archive`, { reason }).then((r) => r.data);
+
+// POST unarchive -> 200 { ok, unarchived } · 400 NOT_ARCHIVED
+export const apiUnarchiveCandidate = (candidateId) =>
+  client.post(`/candidates/${candidateId}/unarchive`).then((r) => r.data);
+
 // ── Stuck issues ────────────────────────────────────────────────────────
 export const apiGetStuckIssues = (params = {}) =>
   client.get('/stuck-issues', { params }).then((r) => r.data);

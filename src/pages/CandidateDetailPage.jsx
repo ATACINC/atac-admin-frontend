@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -6,12 +6,16 @@ import {
   apiClearSimulatorCooldown,
   apiResetSimulatorAttempt,
   apiForceSimulatorRetry,
+  apiResendVerification,
+  apiUnarchiveCandidate,
 } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import Toast from '../components/Toast';
 import SimulatorActionModal from '../components/SimulatorActionModal';
 import ResetPasswordModal from '../components/ResetPasswordModal';
+import EditEmailModal from '../components/EditEmailModal';
+import ArchiveCandidateModal from '../components/ArchiveCandidateModal';
 import { timeAgo } from '../utils/timeAgo';
 import { formatLongDate } from '../utils/format';
 import './CandidateDetailPage.css';
@@ -78,7 +82,8 @@ export default function CandidateDetailPage() {
   const queryClient = useQueryClient();
 
   const [toast, setToast] = useState(null); // { message, type }
-  const [openAction, setOpenAction] = useState(null); // null | 'clear' | 'reset' | 'force' | 'password'
+  const [openAction, setOpenAction] = useState(null); // null | 'clear' | 'reset' | 'force' | 'password' | 'editEmail' | 'archive'
+  const [resendCooldown, setResendCooldown] = useState(0); // seconds; >0 disables Resend Verification
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['candidate', id],
@@ -133,6 +138,48 @@ export default function CandidateDetailPage() {
       setToast({
         message: parts.length ? `Force retry: ${parts.join(', ')}.` : 'Force retry applied.',
         type: 'success',
+      });
+    },
+  });
+
+  // Resend-verification cooldown countdown, seeded from a 429 waitSeconds.
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    const t = setInterval(() => setResendCooldown((s) => (s > 1 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
+
+  const resendVerification = useMutation({
+    mutationFn: () => apiResendVerification(id),
+    onSuccess: (res) => {
+      invalidate();
+      setToast({
+        message: res?.sent ? 'Verification email sent.' : 'Resend recorded — delivery pending.',
+        type: res?.sent ? 'success' : 'warning',
+      });
+    },
+    onError: (err) => {
+      const status = err?.response?.status;
+      const d = err?.response?.data || {};
+      if (status === 429 && d.waitSeconds) {
+        setResendCooldown(d.waitSeconds);
+        setToast({ message: `Please wait ${d.waitSeconds}s before resending.`, type: 'warning' });
+      } else {
+        setToast({ message: d.error || d.message || 'Resend failed. Try again.', type: 'error' });
+      }
+    },
+  });
+
+  const unarchive = useMutation({
+    mutationFn: () => apiUnarchiveCandidate(id),
+    onSuccess: () => {
+      invalidate();
+      setToast({ message: 'Candidate unarchived.', type: 'success' });
+    },
+    onError: (err) => {
+      setToast({
+        message: err?.response?.data?.error || err?.message || 'Unarchive failed. Try again.',
+        type: 'error',
       });
     },
   });
@@ -214,7 +261,10 @@ export default function CandidateDetailPage() {
             <h2 className="cand-name-big">{cand.name || '--'}</h2>
             {cand.email && <div className="cand-email-small">{cand.email}</div>}
           </div>
-          <span className={`cand-badge ${journey.cls}`}>{journey.label}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            {cand.archivedAt && <span className="cand-badge cand-badge-archived">Archived</span>}
+            <span className={`cand-badge ${journey.cls}`}>{journey.label}</span>
+          </div>
         </div>
 
         <div className="cd-meta-row">
@@ -266,6 +316,47 @@ export default function CandidateDetailPage() {
                 onClick={() => setOpenAction('password')}
               >
                 Reset Password
+              </button>
+            )}
+            {cand.email && (
+              <button
+                type="button"
+                className="cd-action-btn"
+                onClick={() => setOpenAction('editEmail')}
+              >
+                Edit Email
+              </button>
+            )}
+            {cand.email && !cand.emailVerified && (
+              <button
+                type="button"
+                className="cd-action-btn"
+                disabled={resendVerification.isPending || resendCooldown > 0}
+                onClick={() => resendVerification.mutate()}
+              >
+                {resendCooldown > 0
+                  ? `Resend Verification (${resendCooldown}s)`
+                  : resendVerification.isPending
+                    ? 'Sending…'
+                    : 'Resend Verification'}
+              </button>
+            )}
+            {cand.archivedAt ? (
+              <button
+                type="button"
+                className="cd-action-btn"
+                disabled={unarchive.isPending}
+                onClick={() => unarchive.mutate()}
+              >
+                {unarchive.isPending ? 'Unarchiving…' : 'Unarchive'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="cd-action-btn cd-action-btn-danger"
+                onClick={() => setOpenAction('archive')}
+              >
+                Archive
               </button>
             )}
           </div>
@@ -487,6 +578,34 @@ export default function CandidateDetailPage() {
             setToast({ message: `Temporary password emailed to ${cand.email}`, type: 'success' });
           }
           closeAction();
+        }}
+      />
+
+      <EditEmailModal
+        open={openAction === 'editEmail'}
+        candidateId={id}
+        currentEmail={cand.email}
+        candidateName={cand.name}
+        onClose={closeAction}
+        onComplete={({ email, mxWarning }) => {
+          invalidate();
+          setToast(
+            mxWarning
+              ? { message: `Email updated to ${email}. MX warning: ${mxWarning}`, type: 'warning' }
+              : { message: `Email updated to ${email}. Verification sent.`, type: 'success' },
+          );
+        }}
+      />
+
+      <ArchiveCandidateModal
+        open={openAction === 'archive'}
+        candidateId={id}
+        candidateName={cand.name}
+        candidateEmail={cand.email}
+        onClose={closeAction}
+        onComplete={() => {
+          invalidate();
+          setToast({ message: 'Candidate archived.', type: 'success' });
         }}
       />
 
