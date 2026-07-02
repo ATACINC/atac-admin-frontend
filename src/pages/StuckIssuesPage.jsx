@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { apiGetStuckIssues } from '../api/client';
+import { apiGetStuckIssues, apiResendVerification } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import SeverityBadge from '../components/SeverityBadge';
+import Toast from '../components/Toast';
+import EditEmailModal from '../components/EditEmailModal';
 import { timeAgo } from '../utils/timeAgo';
 import { humanizeStuckType, humanizeNoteKey } from '../utils/humanize';
 import './StuckIssuesPage.css';
@@ -67,6 +69,35 @@ export default function StuckIssuesPage() {
     queryKey: ['stuck-issues'],
     queryFn: apiGetStuckIssues,
     placeholderData: (prev) => prev,
+  });
+
+  // Inline verification-email actions (contract-driven). Both stay on the
+  // page: toast on success, then refresh the feed so the row updates.
+  const queryClient = useQueryClient();
+  const [toast, setToast] = useState(null);
+  const [editTarget, setEditTarget] = useState(null); // { candidateId, email } | null
+
+  const refreshRows = () => queryClient.invalidateQueries({ queryKey: ['stuck-issues'] });
+
+  const resend = useMutation({
+    mutationFn: (candidateId) => apiResendVerification(candidateId),
+    onSuccess: (res) => {
+      setToast({
+        message: res?.sent ? 'Verification email sent.' : 'Resend recorded — delivery pending.',
+        type: res?.sent ? 'success' : 'warning',
+      });
+      refreshRows();
+    },
+    onError: (err) => {
+      const status = err?.response?.status;
+      const d = err?.response?.data || {};
+      setToast({
+        message: status === 429 && d.waitSeconds
+          ? `Please wait ${d.waitSeconds}s before resending.`
+          : d.error || d.message || 'Resend failed. Try again.',
+        type: status === 429 ? 'warning' : 'error',
+      });
+    },
   });
 
   // Apply test filter, sort, then apply type filter for the visible list.
@@ -182,10 +213,30 @@ export default function StuckIssuesPage() {
             <IssueCard
               key={`${issue.type}:${getTargetId(issue) || idx}`}
               issue={issue}
+              onEditEmail={(candidateId, email) => setEditTarget({ candidateId, email })}
+              onResend={(candidateId) => resend.mutate(candidateId)}
+              resendingId={resend.isPending ? resend.variables : null}
             />
           ))}
         </div>
       )}
+
+      <EditEmailModal
+        open={!!editTarget}
+        candidateId={editTarget?.candidateId}
+        currentEmail={editTarget?.email}
+        onClose={() => setEditTarget(null)}
+        onComplete={({ email, mxWarning }) => {
+          setToast(
+            mxWarning
+              ? { message: `Email updated to ${email}. MX warning: ${mxWarning}`, type: 'warning' }
+              : { message: `Email updated to ${email}. Verification sent.`, type: 'success' },
+          );
+          refreshRows();
+        }}
+      />
+
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
     </div>
   );
 }
@@ -262,7 +313,7 @@ function Pill({ label, count, active, onClick }) {
 }
 
 /* ─── Issue card ─────────────────────────────────────────────────────── */
-function IssueCard({ issue }) {
+function IssueCard({ issue, onEditEmail, onResend, resendingId }) {
   const message = getMessage(issue);
   const age = getAge(issue);
   const targetType = getTargetType(issue);
@@ -279,7 +330,9 @@ function IssueCard({ issue }) {
     <article className={cardClass}>
       <div className="stuck-card-header">
         <SeverityBadge severity={sev} />
-        <span className="stuck-type">{humanizeStuckType(issue.type)}</span>
+        <span className="stuck-type">
+          {issue.verificationEmail ? 'Verification email bounced' : humanizeStuckType(issue.type)}
+        </span>
         {/* Failure-stage badge (simulator items only carry failureStage).
             Tinted by the item's own severity so provider_quota/scoring_error
             (high) read differently from routine drops (low). */}
@@ -316,14 +369,20 @@ function IssueCard({ issue }) {
       </div>
 
       <div className="stuck-card-actions">
-        <IssueActions issue={issue} candidateEmail={candidateEmail} />
+        <IssueActions
+          issue={issue}
+          candidateEmail={candidateEmail}
+          onEditEmail={onEditEmail}
+          onResend={onResend}
+          resendingId={resendingId}
+        />
       </div>
     </article>
   );
 }
 
 /* ─── Type-specific actions ──────────────────────────────────────────── */
-function IssueActions({ issue, candidateEmail }) {
+function IssueActions({ issue, candidateEmail, onEditEmail, onResend, resendingId }) {
   switch (issue.type) {
     case 'failedMint':
       return (
@@ -361,6 +420,30 @@ function IssueActions({ issue, candidateEmail }) {
       );
 
     case 'emailBounce':
+      // Verification-email bounces carry candidateId + the two admin endpoints
+      // in actions{}. Offer the one-click fix inline; stay on the page.
+      if (issue.verificationEmail && issue.candidateId) {
+        const resending = resendingId === issue.candidateId;
+        return (
+          <>
+            <button
+              type="button"
+              className="stuck-action-btn"
+              onClick={() => onEditEmail(issue.candidateId, candidateEmail)}
+            >
+              Edit email
+            </button>
+            <button
+              type="button"
+              className="stuck-action-btn"
+              disabled={resending}
+              onClick={() => onResend(issue.candidateId)}
+            >
+              {resending ? 'Sending…' : 'Resend verification'}
+            </button>
+          </>
+        );
+      }
       return (
         <button
           type="button"
