@@ -34,6 +34,15 @@ function rangeToSince(range) {
 
 const nf = (n) => (n == null || Number.isNaN(Number(n)) ? '—' : Number(n).toLocaleString());
 const pf = (p) => (p == null || Number.isNaN(Number(p)) ? '—' : `${p}%`);
+const moneyFromCents = (cents, currency = 'USD') => {
+  const amount = Number(cents) / 100;
+  if (!Number.isFinite(amount)) return '—';
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
+};
 const titleCase = (s) =>
   String(s || '')
     .replace(/_/g, ' ')
@@ -83,18 +92,34 @@ export default function FunnelPage() {
     const clickConversions = data.click_conversions || [];
     const welcome = data.welcome_sms || {};
 
+    // Account funnel: a true subset chain straight from funnel{} — each stage
+    // is a subset of the one before, so bars read cleanly as % of Registered.
+    const accountStages = [
+      { key: 'registered', label: 'Registered', value: Number(funnel.registered) || 0, tone: 'gold' },
+      { key: 'email_verified', label: 'Email verified', value: Number(funnel.email_verified) || 0, tone: 'gold' },
+      { key: 'paid', label: 'Paid', value: Number(funnel.paid) || 0, tone: 'teal' },
+      { key: 'assessment_passed', label: 'Assessment passed', value: Number(funnel.assessment_passed) || 0, tone: 'teal' },
+      { key: 'certified', label: 'Certified', value: Number(funnel.certified) || 0, tone: 'teal' },
+    ];
+
+    // Recovery funnel: messaging → clicks → recovered payment, kept separate so
+    // it is internally consistent (never mixed with account totals).
     const sentTotal = byChannelTouch.reduce((s, r) => s + (Number(r.sent) || 0), 0);
     const clickedTotal = clicks.reduce((s, r) => s + (Number(r.clicks) || 0), 0);
-    const paid = Number(funnel.paid) || 0;
-    const certified = Number(funnel.certified) || 0;
-
-    const stages = [
+    const recoveredCount = Number(people.converted) || 0;
+    const recoveryStages = [
       { key: 'sent', label: 'Sent', value: sentTotal, tone: 'gold' },
       { key: 'clicked', label: 'Clicked', value: clickedTotal, tone: 'gold' },
-      { key: 'paid', label: 'Paid', value: paid, tone: 'teal' },
-      { key: 'certified', label: 'Certified', value: certified, tone: 'teal' },
+      { key: 'recovered', label: 'Recovered', value: recoveredCount, tone: 'teal' },
     ];
-    const maxStage = Math.max(1, ...stages.map((s) => s.value));
+
+    // Recovered revenue in dollars (backend now returns it on recovery.people).
+    // unmapped > 0 means some conversions could not be resolved to an exact
+    // charge, so the figure is a floor (rendered with a "≥" prefix).
+    const cents = Number(people.recovered_revenue_cents);
+    const revenueCents = Number.isFinite(cents) ? cents : null;
+    const currency = people.currency || 'USD';
+    const unmapped = Number(people?.revenue_source?.unmapped) || 0;
 
     // Merge click_conversions (identified-click -> payment join) onto clicks.
     const convByKey = new Map();
@@ -117,14 +142,17 @@ export default function FunnelPage() {
       funnel,
       byChannelTouch,
       people,
-      stages,
-      maxStage,
+      accountStages,
+      recoveryStages,
       attribution,
       processes,
       welcome,
-      recovered: Number(people.converted) || 0,
+      recovered: recoveredCount,
       reached: Number(people.reached) || 0,
       recoveredPct: people.conversion_pct ?? null,
+      revenueCents,
+      currency,
+      unmapped,
     };
   }, [data]);
 
@@ -217,54 +245,45 @@ export default function FunnelPage() {
         <div className={fetchingCount > 0 ? 'is-stale' : undefined}>
           {/* ── KPI cards ─────────────────────────────────────────────── */}
           <div className="funnel-kpis">
-            <KpiCard label="Sent" value={nf(derived.stages[0].value)} sub="Recovery messages" />
-            <KpiCard label="Clicked" value={nf(derived.stages[1].value)} sub="Message link clicks" />
+            <KpiCard label="Sent" value={nf(derived.recoveryStages[0].value)} sub="Recovery messages" />
+            <KpiCard label="Clicked" value={nf(derived.recoveryStages[1].value)} sub="Message link clicks" />
             <KpiCard label="Paid" value={nf(derived.funnel.paid)} sub="Payment verified" tone="teal" />
             <KpiCard label="Certified" value={nf(derived.funnel.certified)} sub="Active credential" tone="teal" />
             <KpiCard
               label="Recovered"
-              value={nf(derived.recovered)}
-              sub={`${pf(derived.recoveredPct)} of ${nf(derived.reached)} reached`}
+              value={
+                derived.revenueCents != null
+                  ? `${derived.unmapped > 0 ? '≥' : ''}${moneyFromCents(derived.revenueCents, derived.currency)}`
+                  : nf(derived.recovered)
+              }
+              sub={`${nf(derived.recovered)} recovered · ${pf(derived.recoveredPct)} of ${nf(
+                derived.reached,
+              )} reached`}
               tone="gold"
             />
           </div>
 
-          {/* ── Funnel bars ───────────────────────────────────────────── */}
+          {/* ── Account funnel (true subset chain; bars as % of Registered) ── */}
           <section className="funnel-section">
             <div className="funnel-section-head">
-              <div className="funnel-section-title">Conversion Funnel</div>
-              <div className="funnel-section-meta">Sent → Clicked → Paid → Certified</div>
+              <div className="funnel-section-title">Account Funnel</div>
+              <div className="funnel-section-meta">
+                Registered → Email verified → Paid → Assessment passed → Certified
+              </div>
             </div>
-            <div className="funnel-bars">
-              {derived.stages.map((s) => {
-                const width = Math.round((s.value / derived.maxStage) * 100);
-                const ofSent =
-                  derived.stages[0].value > 0
-                    ? `${Math.round((s.value / derived.stages[0].value) * 1000) / 10}% of sent`
-                    : null;
-                return (
-                  <div className="funnel-bar-row" key={s.key}>
-                    <div className="funnel-bar-label">{s.label}</div>
-                    <div className="funnel-bar-track">
-                      <div
-                        className={'funnel-bar-fill funnel-bar-fill-' + s.tone}
-                        style={{ width: `${width}%` }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="funnel-bar-value">
-                      <span className="funnel-bar-count">{nf(s.value)}</span>
-                      {ofSent && s.key !== 'sent' && (
-                        <span className="funnel-bar-pct">{ofSent}</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <FunnelBars stages={derived.accountStages} pctOfLabel="registered" />
+          </section>
+
+          {/* ── Recovery funnel (messaging → click → recovered payment) ──── */}
+          <section className="funnel-section">
+            <div className="funnel-section-head">
+              <div className="funnel-section-title">Recovery Funnel</div>
+              <div className="funnel-section-meta">Sent → Clicked → Recovered</div>
             </div>
+            <FunnelBars stages={derived.recoveryStages} pctOfLabel="sent" />
             <div className="funnel-note">
-              Sent and Clicked are recovery-message counts; Paid and Certified are account totals for
-              the selected window. Stages are not a strict subset chain.
+              Sent and Clicked are recovery message and click counts; Recovered is people who paid
+              after a send.
             </div>
           </section>
 
@@ -310,8 +329,9 @@ export default function FunnelPage() {
               </table>
             </div>
             <div className="funnel-note">
-              The endpoint reports recovered <em>payment conversions</em> (a send counts as converted
-              when the candidate paid after it was sent), not dollar amounts.
+              Rows show recovered <em>payment conversions</em> (a send counts as converted when the
+              candidate paid after it was sent); the total recovered revenue is in the Recovered KPI
+              above.
             </div>
           </section>
 
@@ -399,6 +419,40 @@ function KpiCard({ label, value, sub, tone }) {
       <div className="funnel-kpi-label">{label}</div>
       <div className={numClass}>{value}</div>
       <div className="funnel-kpi-sub">{sub}</div>
+    </div>
+  );
+}
+
+// Renders one internally-consistent funnel. Each stage is a subset of the
+// first, so the bar width and the annotation are both value / firstStage.
+function FunnelBars({ stages, pctOfLabel }) {
+  const denom = Math.max(1, stages[0]?.value || 0);
+  return (
+    <div className="funnel-bars">
+      {stages.map((s, i) => {
+        const width = Math.max(0, Math.min(100, Math.round((s.value / denom) * 100)));
+        const pct = Math.round((s.value / denom) * 1000) / 10;
+        return (
+          <div className="funnel-bar-row" key={s.key}>
+            <div className="funnel-bar-label">{s.label}</div>
+            <div className="funnel-bar-track">
+              <div
+                className={'funnel-bar-fill funnel-bar-fill-' + s.tone}
+                style={{ width: `${width}%` }}
+                aria-hidden="true"
+              />
+            </div>
+            <div className="funnel-bar-value">
+              <span className="funnel-bar-count">{nf(s.value)}</span>
+              {i !== 0 && (
+                <span className="funnel-bar-pct">
+                  {pct}% of {pctOfLabel}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
