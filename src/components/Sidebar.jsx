@@ -8,6 +8,7 @@ const NAV = [
   { to: '/stuck-issues', label: 'Stuck Issues' },
   { to: '/assessments/anomalies', label: 'Anomalies' },
   { to: '/employer-leads', label: 'Employer Leads' },
+  { to: '/funnel', label: 'Funnel' },
 ];
 
 export default function Sidebar() {
