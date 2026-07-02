@@ -119,3 +119,13 @@ export const apiGetFeedbackList = (params = {}) => {
 
 export const apiGetFeedbackStats = () =>
   client.get('/feedback/stats').then((r) => r.data);
+
+// ── Funnel + attribution (read-only) ─────────────────────────────────────
+// GET /funnel[?since=ISO8601] -> { generated_at, window, funnel, recovery,
+// clicks, click_conversions, welcome_sms }. `since` is the only server-side
+// filter; omit it for all-time. No writes.
+export const apiGetFunnel = (params = {}) => {
+  const apiParams = {};
+  if (params.since) apiParams.since = params.since;
+  return client.get('/funnel', { params: apiParams }).then((r) => r.data);
+};

@@ -13,6 +13,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import StuckIssuesPage from './pages/StuckIssuesPage';
 import AssessmentAnomaliesPage from './pages/AssessmentAnomaliesPage';
 import EmployerLeadsPage from './pages/EmployerLeadsPage';
+import FunnelPage from './pages/FunnelPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ export default function App() {
                 <Route path="/stuck-issues" element={<StuckIssuesPage />} />
                 <Route path="/assessments/anomalies" element={<AssessmentAnomaliesPage />} />
                 <Route path="/employer-leads" element={<EmployerLeadsPage />} />
+                <Route path="/funnel" element={<FunnelPage />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
