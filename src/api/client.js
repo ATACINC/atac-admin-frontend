@@ -139,6 +139,21 @@ export const apiGetFeedbackList = (params = {}) => {
 export const apiGetFeedbackStats = () =>
   client.get('/feedback/stats').then((r) => r.data);
 
+// --- Sandbox access codes -----------------------------------------------
+// POST /sandbox/codes { label, scenarios: [code], maxAttempts? } -> 201
+//   { code, label, scenarios, maxAttempts, ... }
+//   400 { code: 'MISSING_LABEL' | 'UNKNOWN_SCENARIO' | 'INVALID_ATTEMPTS'
+//         | 'EXPIRES_UNSUPPORTED', error }
+// Omit maxAttempts entirely when the operator leaves it blank (never send
+// null or 0). There is no expiry column yet, so never send `expires`: the
+// backend rejects it with 400 EXPIRES_UNSUPPORTED.
+export const apiCreateSandboxCode = (body) =>
+  client.post('/sandbox/codes', body).then((r) => r.data);
+
+// GET /sandbox/codes -> issued codes (read-only in the console).
+export const apiGetSandboxCodes = () =>
+  client.get('/sandbox/codes').then((r) => r.data);
+
 // ── Funnel + attribution (read-only) ─────────────────────────────────────
 // GET /funnel[?since=ISO8601] -> { generated_at, window, funnel, recovery,
 // clicks, click_conversions, welcome_sms }. `since` is the only server-side

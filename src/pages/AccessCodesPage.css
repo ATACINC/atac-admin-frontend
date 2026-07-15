@@ -1,0 +1,349 @@
+/* --- Page header ------------------------------------------------------ */
+.ac-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.ac-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--white);
+  margin: 0 0 4px;
+  line-height: 1.05;
+}
+
+.ac-subtitle {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ac-fetching {
+  color: var(--gold);
+}
+
+/* --- Panels ----------------------------------------------------------- */
+.ac-panel {
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 22px 24px;
+  margin-bottom: 22px;
+}
+
+.ac-panel-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--gold);
+  margin: 0 0 18px;
+  line-height: 1.1;
+}
+
+/* --- Form ------------------------------------------------------------- */
+.ac-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 620px;
+}
+
+.ac-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-field-narrow {
+  max-width: 220px;
+}
+
+.ac-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.ac-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  line-height: 1.5;
+  outline: none;
+}
+
+.ac-input:focus {
+  border-color: var(--gold);
+}
+
+.ac-input.has-error {
+  border-color: var(--red);
+}
+
+.ac-input:disabled {
+  opacity: 0.6;
+}
+
+.ac-helper {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.ac-error {
+  margin-top: 8px;
+  padding: 9px 12px;
+  background: rgba(196, 92, 92, 0.08);
+  border: 1px solid rgba(196, 92, 92, 0.32);
+  border-radius: 3px;
+  color: var(--red);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ac-error-form {
+  margin-top: 0;
+}
+
+/* --- Scenario checkboxes ---------------------------------------------- */
+.ac-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ac-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.ac-check:hover {
+  border-color: var(--border);
+  background: rgba(201, 168, 76, 0.04);
+}
+
+.ac-check input {
+  accent-color: var(--gold);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ac-check-code {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 12px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.ac-check-name {
+  font-size: 14px;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.ac-check-sector {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- Submit ----------------------------------------------------------- */
+.ac-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.ac-submit {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 2px;
+  padding: 11px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.ac-submit:disabled {
+  background: rgba(201, 168, 76, 0.4);
+  cursor: not-allowed;
+}
+
+/* --- Issued code ------------------------------------------------------ */
+.ac-issued {
+  margin-top: 22px;
+  padding: 18px 20px;
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+}
+
+.ac-issued-head {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.ac-issued-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ac-issued-code {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  word-break: break-all;
+}
+
+.ac-issued-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* --- States ----------------------------------------------------------- */
+.ac-state {
+  padding: 34px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* --- Table ------------------------------------------------------------ */
+.ac-table-wrap {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  overflow-x: auto;
+  transition: opacity 0.15s;
+}
+
+.ac-table-wrap.is-stale {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.ac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ac-table thead th {
+  background: var(--bg-3);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-2);
+  white-space: nowrap;
+}
+
+.ac-table tbody tr {
+  border-bottom: 1px solid var(--border-2);
+}
+
+.ac-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ac-table td {
+  padding: 14px 16px;
+  color: var(--white);
+  vertical-align: middle;
+}
+
+.ac-code-cell {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 13px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.ac-label-cell {
+  max-width: 240px;
+}
+
+.ac-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ac-dim {
+  color: var(--muted);
+}
+
+.ac-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ac-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: rgba(201, 168, 76, 0.06);
+  color: var(--gold);
+  font-family: Consolas, Menlo, monospace;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ac-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ac-status.is-active {
+  background: rgba(34, 166, 126, 0.10);
+  border: 1px solid rgba(34, 166, 126, 0.32);
+  color: var(--teal-2);
+}
+
+.ac-status.is-inactive {
+  background: rgba(238, 233, 223, 0.04);
+  border: 1px solid var(--border-2);
+  color: var(--muted);
+}
