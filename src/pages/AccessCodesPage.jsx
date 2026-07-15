@@ -25,13 +25,17 @@ const SCENARIOS = [
 const MIN_ATTEMPTS = 1;
 const MAX_ATTEMPTS = 20;
 
-// Backend 400 codes -> the form field the message belongs beside. Anything
-// unrecognized (including EXPIRES_UNSUPPORTED, which we never trigger since
-// the form has no expiry field) falls back to a form-level message.
+// Backend 400 codes -> the form field the message belongs beside. These are the
+// exact strings the issue path emits (services/sandbox-codes.js normalizeInput);
+// anything unmapped falls back to a form-level message, so a server message is
+// always shown somewhere. EXPIRES_UNSUPPORTED has no field -- the form has no
+// expiry input -- so it is deliberately form-level.
 const ERROR_FIELD = {
-  MISSING_LABEL: 'label',
-  UNKNOWN_SCENARIO: 'scenarios',
-  INVALID_ATTEMPTS: 'attempts',
+  LABEL_REQUIRED: 'label',
+  LABEL_TOO_LONG: 'label',
+  SCENARIO_UNKNOWN: 'scenarios',
+  SCENARIOS_INVALID: 'scenarios',
+  MAX_ATTEMPTS_RANGE: 'attempts',
   EXPIRES_UNSUPPORTED: 'form',
 };
 
