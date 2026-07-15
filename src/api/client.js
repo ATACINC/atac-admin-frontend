@@ -150,9 +150,19 @@ export const apiGetFeedbackStats = () =>
 export const apiCreateSandboxCode = (body) =>
   client.post('/sandbox/codes', body).then((r) => r.data);
 
-// GET /sandbox/codes -> issued codes (read-only in the console).
+// GET /sandbox/codes -> { codes: [...] }
 export const apiGetSandboxCodes = () =>
   client.get('/sandbox/codes').then((r) => r.data);
+
+// PATCH /sandbox/codes/:code { active } -> 200 with the updated code object in
+// the same shape the list returns, so the caller can swap the row in place.
+//   400 { code: 'INVALID_ACTIVE', error }, 404 { code: 'CODE_NOT_FOUND', error }
+// Soft toggle only: the backend never deletes, so label and usage history
+// survive and a deactivated code can be reactivated later.
+export const apiSetSandboxCodeActive = (code, active) =>
+  client
+    .patch(`/sandbox/codes/${encodeURIComponent(code)}`, { active })
+    .then((r) => r.data);
 
 // ── Funnel + attribution (read-only) ─────────────────────────────────────
 // GET /funnel[?since=ISO8601] -> { generated_at, window, funnel, recovery,

@@ -347,3 +347,105 @@
   border: 1px solid var(--border-2);
   color: var(--muted);
 }
+
+/* --- Row actions ------------------------------------------------------ */
+/* Mirrors .stuck-action-btn, the console's existing row-action button. */
+.ac-action-btn {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 7px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.ac-action-btn:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.ac-action-btn[disabled] {
+  color: var(--muted);
+  border-color: var(--border-2);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.ac-action-btn[disabled]:hover {
+  background: transparent;
+}
+
+/* --- Deactivate confirm ----------------------------------------------- */
+/* Same shell as RevokeModal: destructive intent reads from the red border
+   and title, and the confirm button stays the console's gold primary. */
+.ac-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 11, 18, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ac-modal {
+  background: var(--bg-3);
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  padding: 32px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  color: var(--white);
+}
+
+.ac-modal-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--red);
+  margin: 0 0 12px;
+  line-height: 1.1;
+}
+
+.ac-modal-body {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ac-modal-code {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 13px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.ac-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ac-btn-secondary {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--muted);
+  border-radius: 2px;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-body);
+  cursor: pointer;
+}

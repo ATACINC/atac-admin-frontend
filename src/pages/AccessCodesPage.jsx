@@ -1,6 +1,10 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiCreateSandboxCode, apiGetSandboxCodes } from '../api/client';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  apiCreateSandboxCode,
+  apiGetSandboxCodes,
+  apiSetSandboxCodeActive,
+} from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import Toast from '../components/Toast';
@@ -39,6 +43,23 @@ function normalizeRows(data) {
   return [];
 }
 
+function codeOf(row) {
+  return row?.code ?? row?.accessCode ?? row?.access_code;
+}
+
+// Swap one row for the object PATCH returned, preserving the container shape
+// the list came back in. Only called on success, so a failed toggle leaves the
+// cached list exactly as it was.
+function replaceRow(data, updated) {
+  const target = codeOf(updated);
+  if (!target) return data;
+  const swap = (list) => list.map((r) => (codeOf(r) === target ? { ...r, ...updated } : r));
+  if (Array.isArray(data)) return swap(data);
+  if (Array.isArray(data?.codes)) return { ...data, codes: swap(data.codes) };
+  if (Array.isArray(data?.data)) return { ...data, data: swap(data.data) };
+  return data;
+}
+
 // Scenarios may come back as codes or as objects; render codes either way.
 function scenarioCodesOf(row) {
   const raw = row.scenarios ?? row.allowedScenarios ?? row.allowed_scenarios ?? [];
@@ -54,6 +75,11 @@ export default function AccessCodesPage() {
   const [errors, setErrors] = useState({});
   const [issued, setIssued] = useState(null);
   const [toast, setToast] = useState(null);
+  // Code awaiting the deactivate confirm, and the code with a PATCH in flight.
+  const [pendingRow, setPendingRow] = useState(null);
+  const [busyCode, setBusyCode] = useState(null);
+
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['sandboxCodes'],
@@ -125,6 +151,34 @@ export default function AccessCodesPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Deactivate / reactivate. On success the returned object replaces the row in
+  // place (PATCH returns the same shape the list does). On failure the row and
+  // the rest of the table are left untouched and only a Toast reports it.
+  const setActive = async (code, active) => {
+    if (busyCode) return;
+    setBusyCode(code);
+    try {
+      const updated = await apiSetSandboxCodeActive(code, active);
+      queryClient.setQueryData(['sandboxCodes'], (prev) => replaceRow(prev, updated));
+      setToast({ message: active ? 'Code reactivated.' : 'Code deactivated.', type: 'success' });
+    } catch (err) {
+      if (err?.response?.status === 401) return; // interceptor routes to /login
+      const message = err?.response?.data?.error || err?.response?.data?.message;
+      setToast({
+        message: message || (active ? 'Could not reactivate the code.' : 'Could not deactivate the code.'),
+        type: 'error',
+      });
+    } finally {
+      setBusyCode(null);
+    }
+  };
+
+  const confirmDeactivate = () => {
+    const code = codeOf(pendingRow);
+    setPendingRow(null);
+    if (code) setActive(code, false);
   };
 
   const issuedCode = issued && (issued.code ?? issued.accessCode ?? issued.access_code);
@@ -259,11 +313,19 @@ export default function AccessCodesPage() {
                   <th>Used</th>
                   <th>Active</th>
                   <th>Created</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
-                  <CodeRow key={(row.code ?? row.id ?? i) + ''} row={row} />
+                  <CodeRow
+                    key={(row.code ?? row.id ?? i) + ''}
+                    row={row}
+                    busy={busyCode === codeOf(row)}
+                    disabled={!!busyCode}
+                    onDeactivate={() => setPendingRow(row)}
+                    onReactivate={() => setActive(codeOf(row), true)}
+                  />
                 ))}
               </tbody>
             </table>
@@ -271,9 +333,69 @@ export default function AccessCodesPage() {
         )}
       </section>
 
+      <DeactivateConfirm
+        row={pendingRow}
+        onCancel={() => setPendingRow(null)}
+        onConfirm={confirmDeactivate}
+      />
+
       {toast && (
         <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
+    </div>
+  );
+}
+
+/* --- Deactivate confirm ----------------------------------------------- */
+// The console has no shared confirm component; each flow ships its own modal
+// (RevokeModal, MarkContactedModal). This mirrors that structure and styling:
+// destructive intent is carried by the red border and title, not a red button.
+function DeactivateConfirm({ row, onCancel, onConfirm }) {
+  const open = !!row;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open, onCancel]);
+
+  if (!open) return null;
+  const code = codeOf(row);
+
+  return (
+    <div
+      className="ac-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ac-deactivate-title"
+      onClick={onCancel}
+    >
+      <div className="ac-modal" onClick={(e) => e.stopPropagation()}>
+        <h2 id="ac-deactivate-title" className="ac-modal-title">Deactivate code?</h2>
+        <p className="ac-modal-body">
+          Candidates can no longer use <span className="ac-modal-code">{code}</span> once
+          deactivated. You can reactivate it later.
+        </p>
+        <div className="ac-modal-actions">
+          <button type="button" className="ac-btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="ac-submit" onClick={onConfirm} autoFocus>
+            Deactivate
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -295,7 +417,7 @@ function Header({ subtitle, isFetching }) {
 
 /* --- Row -------------------------------------------------------------- */
 // Defensive field reads: the API may emit camelCase or snake_case.
-function CodeRow({ row }) {
+function CodeRow({ row, busy, disabled, onDeactivate, onReactivate }) {
   const code = row.code ?? row.accessCode ?? row.access_code ?? '--';
   const max = row.maxAttempts ?? row.max_attempts;
   const used = row.attemptsUsed ?? row.attempts_used ?? row.users ?? 0;
@@ -327,6 +449,16 @@ function CodeRow({ row }) {
       </td>
       <td className="ac-dim" title={created || ''}>
         {created ? timeAgo(created) : '--'}
+      </td>
+      <td>
+        <button
+          type="button"
+          className="ac-action-btn"
+          disabled={disabled}
+          onClick={active ? onDeactivate : onReactivate}
+        >
+          {busy ? 'Working...' : active ? 'Deactivate' : 'Reactivate'}
+        </button>
       </td>
     </tr>
   );
