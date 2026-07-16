@@ -140,13 +140,14 @@ export const apiGetFeedbackStats = () =>
   client.get('/feedback/stats').then((r) => r.data);
 
 // --- Sandbox access codes -----------------------------------------------
-// POST /sandbox/codes { label, scenarios: [code], maxAttempts? } -> 201
-//   { code, label, scenarios, maxAttempts, ... }
-//   400 { code: 'MISSING_LABEL' | 'UNKNOWN_SCENARIO' | 'INVALID_ATTEMPTS'
-//         | 'EXPIRES_UNSUPPORTED', error }
-// Omit maxAttempts entirely when the operator leaves it blank (never send
-// null or 0). There is no expiry column yet, so never send `expires`: the
-// backend rejects it with 400 EXPIRES_UNSUPPORTED.
+// POST /sandbox/codes { label, scenarios: [code], maxAttempts?, expires? }
+//   -> 201 { code, label, scenarios, maxAttempts, active, createdAt, expiresAt }
+//   400 { code: 'LABEL_REQUIRED' | 'LABEL_TOO_LONG' | 'SCENARIO_UNKNOWN'
+//         | 'SCENARIOS_INVALID' | 'MAX_ATTEMPTS_RANGE' | 'EXPIRES_INVALID'
+//         | 'EXPIRES_IN_PAST', error }
+// Omit maxAttempts and expires entirely when the operator leaves them blank
+// (never send null or 0). `expires` is an ISO timestamp and must be in the
+// future; the backend stores it as expiresAt, where null means never expires.
 export const apiCreateSandboxCode = (body) =>
   client.post('/sandbox/codes', body).then((r) => r.data);
 

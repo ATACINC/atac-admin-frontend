@@ -28,16 +28,33 @@ const MAX_ATTEMPTS = 20;
 // Backend 400 codes -> the form field the message belongs beside. These are the
 // exact strings the issue path emits (services/sandbox-codes.js normalizeInput);
 // anything unmapped falls back to a form-level message, so a server message is
-// always shown somewhere. EXPIRES_UNSUPPORTED has no field -- the form has no
-// expiry input -- so it is deliberately form-level.
+// always shown somewhere.
 const ERROR_FIELD = {
   LABEL_REQUIRED: 'label',
   LABEL_TOO_LONG: 'label',
   SCENARIO_UNKNOWN: 'scenarios',
   SCENARIOS_INVALID: 'scenarios',
   MAX_ATTEMPTS_RANGE: 'attempts',
-  EXPIRES_UNSUPPORTED: 'form',
+  EXPIRES_INVALID: 'expires',
+  EXPIRES_IN_PAST: 'expires',
 };
+
+// Expiry presets. The offset is applied at SUBMIT time, not when the operator
+// picks it, so a form left open for an hour still sends a future timestamp.
+const EXPIRY_NEVER = 'never';
+const EXPIRY_CUSTOM = 'custom';
+const EXPIRY_PRESETS = [
+  { value: EXPIRY_NEVER,  label: 'Never' },
+  { value: '24h',         label: '24 hours', ms: 24 * 60 * 60 * 1000 },
+  { value: '7d',          label: '7 days',   ms: 7 * 24 * 60 * 60 * 1000 },
+  { value: '30d',         label: '30 days',  ms: 30 * 24 * 60 * 60 * 1000 },
+  { value: EXPIRY_CUSTOM, label: 'Custom' },
+];
+
+// Messages for the two expiry 400s, reused for the client-side pre-check so the
+// operator reads the same words whichever side rejects the value.
+const EXPIRY_INVALID_MSG = 'Expiry must be a valid date.';
+const EXPIRY_PAST_MSG = 'Expiry must be in the future.';
 
 // The list endpoint may return a bare array or wrap it; accept either.
 function normalizeRows(data) {
@@ -64,6 +81,59 @@ function replaceRow(data, updated) {
   return data;
 }
 
+function expiresAtOf(row) {
+  return row?.expiresAt ?? row?.expires_at ?? null;
+}
+
+// Has this code's expiry already passed? False for a code that never expires
+// and for anything unparseable, so a bad value can never read as expired.
+function isExpired(row, now = Date.now()) {
+  const raw = expiresAtOf(row);
+  if (!raw) return false;
+  const t = Date.parse(raw);
+  return Number.isFinite(t) && t <= now;
+}
+
+// The three display states, derived only for rendering. This mirrors the
+// backend's own precedence (routes/sandbox.js checks active BEFORE expiry), so
+// a deactivated code reads INACTIVE whether or not it has also expired. The
+// console never enforces expiry; it only reflects what the API returns.
+function statusOf(row, now = Date.now()) {
+  const active = row?.active ?? row?.is_active;
+  if (!active) return 'inactive';
+  if (isExpired(row, now)) return 'expired';
+  return 'active';
+}
+
+const STATUS_LABEL = { active: 'Active', inactive: 'Inactive', expired: 'Expired' };
+
+// Turn the form's expiry choice into an ISO string, or null for "never".
+// Throws a message string for a custom value that cannot be used.
+function resolveExpiry(mode, customValue, now = Date.now()) {
+  if (mode === EXPIRY_NEVER) return null;
+  if (mode === EXPIRY_CUSTOM) {
+    if (!customValue) throw EXPIRY_INVALID_MSG;
+    // datetime-local yields local wall-clock time; Date parses it as local and
+    // toISOString converts to UTC, which is what the backend stores.
+    const t = new Date(customValue).getTime();
+    if (!Number.isFinite(t)) throw EXPIRY_INVALID_MSG;
+    if (t <= now) throw EXPIRY_PAST_MSG;
+    return new Date(t).toISOString();
+  }
+  const preset = EXPIRY_PRESETS.find((p) => p.value === mode);
+  if (!preset || !preset.ms) throw EXPIRY_INVALID_MSG;
+  return new Date(now + preset.ms).toISOString();
+}
+
+// Absolute local timestamp for the table. Falls back to the raw string rather
+// than throwing if the API ever sends something unparseable.
+function formatExpiry(raw) {
+  if (!raw) return null;
+  const t = Date.parse(raw);
+  if (!Number.isFinite(t)) return String(raw);
+  return new Date(t).toLocaleString();
+}
+
 // Scenarios may come back as codes or as objects; render codes either way.
 function scenarioCodesOf(row) {
   const raw = row.scenarios ?? row.allowedScenarios ?? row.allowed_scenarios ?? [];
@@ -75,6 +145,9 @@ export default function AccessCodesPage() {
   const [label, setLabel] = useState('');
   const [selected, setSelected] = useState([]);
   const [attempts, setAttempts] = useState('');
+  // Expiry defaults to never, matching every code issued before expiry existed.
+  const [expiryMode, setExpiryMode] = useState(EXPIRY_NEVER);
+  const [expiryCustom, setExpiryCustom] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [issued, setIssued] = useState(null);
@@ -110,6 +183,13 @@ export default function AccessCodesPage() {
         next.attempts = `Attempts must be a whole number from ${MIN_ATTEMPTS} to ${MAX_ATTEMPTS}.`;
       }
     }
+    // Pre-check the custom expiry so an obviously dead date is caught without a
+    // round trip. The server still validates; this only saves a request.
+    try {
+      resolveExpiry(expiryMode, expiryCustom);
+    } catch (msg) {
+      next.expires = typeof msg === 'string' ? msg : EXPIRY_INVALID_MSG;
+    }
     return next;
   };
 
@@ -121,10 +201,12 @@ export default function AccessCodesPage() {
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    // Omit maxAttempts entirely when blank; never send null or 0. No expiry
-    // field: the backend has no expiry column.
+    // Omit maxAttempts and expires entirely when unset; never send null or 0.
     const body = { label: label.trim(), scenarios: [...selected] };
     if (attempts !== '') body.maxAttempts = Number(attempts);
+    // Resolved here, not at pick time, so a preset is measured from submit.
+    const expiresIso = resolveExpiry(expiryMode, expiryCustom);
+    if (expiresIso) body.expires = expiresIso;
 
     setSubmitting(true);
     setIssued(null);
@@ -134,6 +216,8 @@ export default function AccessCodesPage() {
       setLabel('');
       setSelected([]);
       setAttempts('');
+      setExpiryMode(EXPIRY_NEVER);
+      setExpiryCustom('');
       setErrors({});
       setToast({ message: 'Access code issued', type: 'success' });
       refetch();
@@ -265,6 +349,48 @@ export default function AccessCodesPage() {
             {errors.attempts && <div className="ac-error" role="alert">{errors.attempts}</div>}
           </div>
 
+          {/* Expires */}
+          <div className="ac-field">
+            <span className="ac-label">Expires</span>
+            <div className="ac-expiry-choices" role="group" aria-label="Expiry">
+              {EXPIRY_PRESETS.map((p) => (
+                <label key={p.value} className="ac-radio">
+                  <input
+                    type="radio"
+                    name="ac-expiry"
+                    value={p.value}
+                    checked={expiryMode === p.value}
+                    disabled={submitting}
+                    onChange={() => {
+                      setExpiryMode(p.value);
+                      if (errors.expires) setErrors((prev) => ({ ...prev, expires: '' }));
+                    }}
+                  />
+                  <span>{p.label}</span>
+                </label>
+              ))}
+            </div>
+            {expiryMode === EXPIRY_CUSTOM && (
+              <input
+                id="ac-expiry-input"
+                className={'ac-input ac-expiry-input' + (errors.expires ? ' has-error' : '')}
+                type="datetime-local"
+                value={expiryCustom}
+                disabled={submitting}
+                aria-label="Custom expiry date and time"
+                onChange={(e) => {
+                  setExpiryCustom(e.target.value);
+                  if (errors.expires) setErrors((prev) => ({ ...prev, expires: '' }));
+                }}
+              />
+            )}
+            <div className="ac-helper">
+              When the code stops working. Leave on Never for no expiry. Presets count from
+              the moment you issue.
+            </div>
+            {errors.expires && <div className="ac-error" role="alert">{errors.expires}</div>}
+          </div>
+
           {errors.form && <div className="ac-error ac-error-form" role="alert">{errors.form}</div>}
 
           <div className="ac-actions">
@@ -315,7 +441,8 @@ export default function AccessCodesPage() {
                   <th>Scenarios</th>
                   <th>Attempts</th>
                   <th>Used</th>
-                  <th>Active</th>
+                  <th>Status</th>
+                  <th>Expires</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -428,6 +555,14 @@ function CodeRow({ row, busy, disabled, onDeactivate, onReactivate }) {
   const created = row.createdAt ?? row.created_at;
   const active = row.active ?? row.is_active;
   const scenarios = scenarioCodesOf(row);
+  // Derived at render. There is no timer: an open tab will not flip a row to
+  // Expired on its own, it re-derives on the next render or refresh.
+  const status = statusOf(row);
+  const expiresRaw = expiresAtOf(row);
+  const expiresText = formatExpiry(expiresRaw);
+  // Reactivating a code whose expiry has passed leaves it unusable, and there
+  // is no endpoint to change an expiry, so say so before the click.
+  const showExpiredHint = !active && isExpired(row);
 
   return (
     <tr>
@@ -447,9 +582,10 @@ function CodeRow({ row, busy, disabled, onDeactivate, onReactivate }) {
       </td>
       <td className="ac-num">{used}</td>
       <td>
-        <span className={'ac-status ' + (active ? 'is-active' : 'is-inactive')}>
-          {active ? 'Active' : 'Inactive'}
-        </span>
+        <span className={'ac-status is-' + status}>{STATUS_LABEL[status]}</span>
+      </td>
+      <td className="ac-dim" title={expiresRaw || ''}>
+        {expiresText || <span className="ac-dim">Never</span>}
       </td>
       <td className="ac-dim" title={created || ''}>
         {created ? timeAgo(created) : '--'}
@@ -463,6 +599,11 @@ function CodeRow({ row, busy, disabled, onDeactivate, onReactivate }) {
         >
           {busy ? 'Working...' : active ? 'Deactivate' : 'Reactivate'}
         </button>
+        {showExpiredHint && (
+          <div className="ac-action-hint">
+            Past its expiry. Reactivating will not make it usable; issue a new code.
+          </div>
+        )}
       </td>
     </tr>
   );

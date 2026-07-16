@@ -348,6 +348,58 @@
   color: var(--muted);
 }
 
+/* Amber, so expired never reads as either healthy (teal) or switched off
+   (grey). Red stays reserved for destructive actions and errors. */
+.ac-status.is-expired {
+  background: rgba(196, 138, 42, 0.12);
+  border: 1px solid rgba(196, 138, 42, 0.38);
+  color: var(--amber);
+}
+
+/* --- Expiry control --------------------------------------------------- */
+.ac-expiry-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ac-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--white);
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.ac-radio:hover {
+  border-color: var(--border);
+  background: rgba(201, 168, 76, 0.04);
+}
+
+.ac-radio input {
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.ac-expiry-input {
+  margin-top: 8px;
+  max-width: 260px;
+  color-scheme: dark;
+}
+
+.ac-action-hint {
+  margin-top: 6px;
+  max-width: 220px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
 /* --- Row actions ------------------------------------------------------ */
 /* Mirrors .stuck-action-btn, the console's existing row-action button. */
 .ac-action-btn {
