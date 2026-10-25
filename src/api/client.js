@@ -174,3 +174,13 @@ export const apiGetFunnel = (params = {}) => {
   if (params.since) apiParams.since = params.since;
   return client.get('/funnel', { params: apiParams }).then((r) => r.data);
 };
+
+// ── Arise recruiting leads ─────────────────────────────────────────────
+export const apiGetAriseLeads = (params = {}) =>
+  client.get('/arise-leads', { params }).then((r) => r.data);
+
+export const apiSetAriseLeadStatus = (id, status, note) =>
+  client.post(`/arise-leads/${id}/status`, { status, note }).then((r) => r.data);
+
+export const apiExportAriseLeads = () =>
+  client.get('/arise-leads/export.csv', { responseType: 'blob' }).then((r) => r.data);
