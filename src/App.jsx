@@ -13,6 +13,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import StuckIssuesPage from './pages/StuckIssuesPage';
 import AssessmentAnomaliesPage from './pages/AssessmentAnomaliesPage';
 import EmployerLeadsPage from './pages/EmployerLeadsPage';
+import AriseLeadsPage from './pages/AriseLeadsPage';
 import FunnelPage from './pages/FunnelPage';
 import AccessCodesPage from './pages/AccessCodesPage';
 
@@ -68,6 +69,7 @@ export default function App() {
                 <Route path="/stuck-issues" element={<StuckIssuesPage />} />
                 <Route path="/assessments/anomalies" element={<AssessmentAnomaliesPage />} />
                 <Route path="/employer-leads" element={<EmployerLeadsPage />} />
+                <Route path="/arise-leads" element={<AriseLeadsPage />} />
                 <Route path="/funnel" element={<FunnelPage />} />
                 <Route path="/access-codes" element={<AccessCodesPage />} />
               </Route>
