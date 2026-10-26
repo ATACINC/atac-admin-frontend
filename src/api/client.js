@@ -184,3 +184,21 @@ export const apiSetAriseLeadStatus = (id, status, note) =>
 
 export const apiExportAriseLeads = () =>
   client.get('/arise-leads/export.csv', { responseType: 'blob' }).then((r) => r.data);
+
+// ── Agent roster + MSA/NDA signing ─────────────────────────────────────
+export const apiGetAgentRoster = (params = {}) =>
+  client.get('/agent-roster', { params }).then((r) => r.data);
+
+// POST { firstName, lastName, email, phone, cspId, network, adpStatus, internalNotes, sendInvite }
+//   -> 201 { id, signLink } · 409 { code:'DUPLICATE', id }
+export const apiAddAgent = (body) =>
+  client.post('/agent-roster', body).then((r) => r.data);
+
+export const apiInviteAgent = (id) =>
+  client.post(`/agent-roster/${id}/invite`).then((r) => r.data);
+
+export const apiUpdateAgent = (id, patch) =>
+  client.patch(`/agent-roster/${id}`, patch).then((r) => r.data);
+
+export const apiDownloadAgreementPdf = (agreementId) =>
+  client.get(`/agent-roster/agreements/${agreementId}/pdf`, { responseType: 'blob' }).then((r) => r.data);
