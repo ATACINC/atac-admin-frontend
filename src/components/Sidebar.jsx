@@ -9,6 +9,7 @@ const NAV = [
   { to: '/assessments/anomalies', label: 'Anomalies' },
   { to: '/employer-leads', label: 'Employer Leads' },
   { to: '/arise-leads', label: 'Arise Leads' },
+  { to: '/agent-roster', label: 'Agent Roster' },
   { to: '/funnel', label: 'Funnel' },
   { to: '/access-codes', label: 'Access Codes' },
 ];
