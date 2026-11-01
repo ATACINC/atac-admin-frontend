@@ -63,6 +63,15 @@ export const apiGetCandidates = (params = {}) =>
 export const apiGetCandidate = (candidateId) =>
   client.get(`/candidates/${candidateId}`).then((r) => r.data);
 
+// SMS cohort export (admin JWT goes in the header, so this cannot be a plain
+// <a href>; we fetch the CSV as a blob and hand it to the browser).
+export const apiExportCandidatesCsv = () =>
+  client.get('/candidates/export.csv', { responseType: 'blob' }).then((r) => {
+    const cd = r.headers?.['content-disposition'] || '';
+    const m = /filename="?([^";]+)"?/.exec(cd);
+    return { blob: r.data, filename: (m && m[1]) || 'atac-candidates.csv' };
+  });
+
 // ── Simulator ops (Sim-Ops Phase 2) ──────────────────────────────────────
 // All three are POST with no body; the backend resolves the target session
 // and cooldown server-side. Returned shapes:

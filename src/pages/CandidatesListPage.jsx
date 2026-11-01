@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiGetCandidates } from '../api/client';
+import { apiGetCandidates, apiExportCandidatesCsv } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import Pagination from '../components/Pagination';
@@ -115,6 +115,32 @@ export default function CandidatesListPage() {
     setResetTarget({ email: candidate.email, name: candidate.name });
   };
 
+  // ── CSV export (full non-archived cohort incl. phone / SMS consent) ──
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const { blob, filename } = await apiExportCandidatesCsv();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setToast({ message: `Exported ${filename}`, type: 'success' });
+    } catch (err) {
+      setToast({
+        message: err?.response?.data?.error || err?.message || 'Export failed.',
+        type: 'error',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div>
       {/* ── Header ──────────────────────────────────────────── */}
@@ -125,6 +151,15 @@ export default function CandidatesListPage() {
             {isLoading ? 'Loading…' : `${total.toLocaleString()} total`}
           </div>
         </div>
+        <button
+          type="button"
+          className="cands-export"
+          onClick={exportCsv}
+          disabled={exporting}
+          title="Download all non-archived candidates with phone and SMS consent fields"
+        >
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </button>
       </header>
 
       {/* ── Filters ────────────────────────────────────────── */}
@@ -190,6 +225,7 @@ export default function CandidatesListPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Wallet</th>
+                  <th>Phone / SMS</th>
                   <th>Status</th>
                   <th>Latest Score</th>
                   <th>Joined</th>
@@ -286,6 +322,9 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
         )}
       </td>
       <td>
+        <PhoneSmsCell candidate={candidate} />
+      </td>
+      <td>
         <CandidateStatusBadge status={candidate.status} />
       </td>
       <td>
@@ -313,6 +352,26 @@ function CandidateRow({ candidate, onNavigate, onReset }) {
         )}
       </td>
     </tr>
+  );
+}
+
+// Phone + SMS consent state from the admin list fields (phoneE164, smsConsent,
+// smsConsentAt, smsConsentSource). Three states: no phone, phone without
+// consent, phone with consent (source + timestamp in the tooltip).
+function PhoneSmsCell({ candidate }) {
+  const phone = candidate.phoneE164;
+  if (!phone) return <span className="cell-wallet-empty">no phone</span>;
+  const consented = candidate.smsConsent === true;
+  const title = consented
+    ? `SMS consent: ${candidate.smsConsentSource || 'unknown source'}${candidate.smsConsentAt ? ' at ' + new Date(candidate.smsConsentAt).toLocaleString() : ''}`
+    : 'Phone on file, no SMS consent';
+  return (
+    <div className="cell-phone" title={title}>
+      <span className="cell-phone-number">{phone}</span>
+      <span className={'cand-badge ' + (consented ? 'cand-badge-sms-yes' : 'cand-badge-sms-no')}>
+        {consented ? 'SMS' : 'No consent'}
+      </span>
+    </div>
   );
 }
 

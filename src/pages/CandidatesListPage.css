@@ -94,6 +94,29 @@
   background: rgba(201, 168, 76, 0.08);
 }
 
+.cands-export {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cands-export:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.cands-export:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .cands-fetching {
   font-size: 11px;
   letter-spacing: 0.18em;
@@ -178,6 +201,30 @@
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
+}
+
+.cell-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.cell-phone-number {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.cand-badge-sms-yes {
+  background: rgba(26, 143, 105, 0.14);
+  color: #4FC396;
+  border: 1px solid rgba(26, 143, 105, 0.35);
+}
+
+.cand-badge-sms-no {
+  background: rgba(238, 233, 223, 0.05);
+  color: rgba(238, 233, 223, 0.45);
+  border: 1px solid rgba(238, 233, 223, 0.12);
 }
 
 .cell-wallet-empty {
